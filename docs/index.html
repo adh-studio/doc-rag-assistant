@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>doc-rag-assistant - Pipeline RAG</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --ink: #1a2230;
+      --muted: #5a6478;
+      --accent: #2f6df6;
+      --accent-soft: #e5edff;
+      --border: #dde3ee;
+      --ok: #1f9d6b;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e1420;
+        --card: #161e2d;
+        --ink: #e8edf6;
+        --muted: #9aa6bd;
+        --accent: #6ea0ff;
+        --accent-soft: #1d2a45;
+        --border: #263146;
+        --ok: #43c694;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 48px 20px 72px; }
+    header { margin-bottom: 40px; }
+    h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0 0 8px; letter-spacing: -0.02em; }
+    .tag { color: var(--accent); font-weight: 600; }
+    .lead { color: var(--muted); font-size: 1.1rem; max-width: 60ch; }
+    h2 { font-size: 1.3rem; margin: 40px 0 16px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+    }
+    .pipeline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .step {
+      flex: 1 1 150px;
+      background: var(--accent-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+    }
+    .step .num {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+    }
+    .step .title { font-weight: 650; margin: 4px 0 6px; }
+    .step .desc { font-size: 0.86rem; color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .feature { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+    .feature h3 { margin: 0 0 6px; font-size: 1rem; }
+    .feature p { margin: 0; font-size: 0.9rem; color: var(--muted); }
+    code {
+      background: var(--accent-soft);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-size: 0.86em;
+    }
+    pre {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      overflow-x: auto;
+      font-size: 0.86rem;
+    }
+    pre code { background: none; border: none; padding: 0; }
+    .check { color: var(--ok); font-weight: 700; }
+    footer { margin-top: 48px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); padding-top: 20px; }
+    .arrow { align-self: center; color: var(--muted); font-size: 1.4rem; }
+    @media (max-width: 680px) { .arrow { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="tag">ASSISTANT DOCUMENTAIRE</div>
+      <h1>doc-rag-assistant</h1>
+      <p class="lead">
+        Un pipeline RAG (Retrieval-Augmented Generation) qui repond a des questions
+        sur un corpus de documents en citant systematiquement ses sources.
+        Fonctionne 100% hors ligne grace a un repli TF-IDF deterministe.
+      </p>
+    </header>
+
+    <h2>Le pipeline en cinq etapes</h2>
+    <div class="card">
+      <div class="pipeline">
+        <div class="step">
+          <div class="num">ETAPE 1</div>
+          <div class="title">Ingestion</div>
+          <div class="desc">Lecture des documents et decoupage en chunks qui se recouvrent.</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="step">
+          <div class="num">ETAPE 2</div>
+          <div class="title">Embeddings</div>
+          <div class="desc">Vectorisation de chaque chunk (TF-IDF local ou API distante).</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="step">
+          <div class="num">ETAPE 3</div>
+          <div class="title">Index vectoriel</div>
+          <div class="desc">Stockage numpy persiste, cosinus par produit scalaire.</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="step">
+          <div class="num">ETAPE 4</div>
+          <div class="title">Recherche top-k</div>
+          <div class="desc">Les passages les plus proches de la question, filtres par score.</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div class="step">
+          <div class="num">ETAPE 5</div>
+          <div class="title">Generation citee</div>
+          <div class="desc">Reponse via CLI claude ou repli extractif, sources citees.</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Choix d'architecture</h2>
+    <div class="grid">
+      <div class="feature">
+        <h3>Deux modes d'embeddings</h3>
+        <p>Fournisseur distant si une cle API est presente, sinon repli TF-IDF local et deterministe. Meme interface, zero couplage.</p>
+      </div>
+      <div class="feature">
+        <h3>Base vectorielle interchangeable</h3>
+        <p>Implementation numpy simple, remplacable par FAISS, pgvector ou Chroma sans toucher au reste du pipeline.</p>
+      </div>
+      <div class="feature">
+        <h3>Generation en chaine</h3>
+        <p>CLI claude en priorite, repli extractif deterministe en secours. Une reponse est toujours produite.</p>
+      </div>
+      <div class="feature">
+        <h3>Garde-fou anti-hallucination</h3>
+        <p>Sous un seuil de similarite, l'assistant repond honnetement "je ne sais pas" plutot que d'inventer.</p>
+      </div>
+    </div>
+
+    <h2>Utilisation</h2>
+    <pre><code># Indexer un dossier de documents
+python -m rag ingest corpus
+
+# Poser une question (la reponse cite ses sources)
+python -m rag ask "Combien coute la formule Business ?"</code></pre>
+
+    <h2>Qualite</h2>
+    <p>
+      <span class="check">&#10003;</span> 17 tests automatises verts (ingestion, recherche, citation, garde-fou)<br />
+      <span class="check">&#10003;</span> Integration continue GitHub Actions (Python 3.13)<br />
+      <span class="check">&#10003;</span> Architecture SOLID : composants injectes, interfaces explicites
+    </p>
+
+    <footer>
+      Projet de demonstration. Le corpus decrit un produit fictif (Nimbus Backup)
+      servant de jeu de donnees pour illustrer le fonctionnement du pipeline.
+    </footer>
+  </div>
+</body>
+</html>

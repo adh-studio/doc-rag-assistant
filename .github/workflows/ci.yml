@@ -1,0 +1,34 @@
+name: CI
+
+# Lance les tests a chaque push et pull request sur la branche principale.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recuperation du code
+        uses: actions/checkout@v4
+
+      - name: Installation de Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Installation des dependances
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Execution des tests (hors ligne, mode TF-IDF)
+        env:
+          # Garantit un fonctionnement 100% local et deterministe en CI :
+          # pas d'embeddings distants, pas d'appel a la CLI claude.
+          RAG_ALLOW_REMOTE_EMBEDDINGS: "false"
+          RAG_ALLOW_CLAUDE_CLI: "false"
+        run: python -m pytest
