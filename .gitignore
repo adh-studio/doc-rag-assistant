@@ -1,0 +1,14 @@
+# Environnements Python
+.venv/
+__pycache__/
+*.pyc
+
+# Index vectoriel genere a l'ingestion
+.rag_index/
+
+# Cache outils
+.pytest_cache/
+.mypy_cache/
+
+# Systeme
+.DS_Store

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "doc-rag-assistant"
+version = "1.0.0"
+description = "Assistant RAG hors ligne qui repond sur un corpus en citant ses sources."
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26,<3",
+    "scikit-learn>=1.4,<2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0,<9"]
+
+[tool.setuptools]
+packages = ["rag"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
